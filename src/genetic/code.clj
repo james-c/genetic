@@ -2,14 +2,23 @@
        :doc "Functions for producing random typed code structures."}
     genetic.code
     (:use [clojure.contrib.def :only (defn-memo)]
+          [clojure.walk :only (postwalk)]
+          [clojure.pprint :only (pprint with-pprint-dispatch code-dispatch)]
           [genetic.utils :only (weighted-choice metadata)]))
 
 (defn-memo wrap-value
-  ([value meta] (with-meta (fn [] value) (assoc meta :arglists (list []))))
+  ([value meta] (with-meta (fn [] value) (assoc meta :arglists (list [])
+                                                     :wrapped true)))
   ([value] (wrap-value value {})))
 
+(defn wrapped? [node] (:wrapped (metadata node)))
+
 (defn node-type
-  [item] (or (:tag (metadata item)) Object))
+  [node] (or (:tag (metadata node)) Object))
+
+(defn-memo eval-node-type
+  [node]
+  (eval (node-type node)))
 
 (defn weight [node] (or (:weight (metadata node)) 1))
 
@@ -20,7 +29,8 @@
   `(defn ~name {:ephemeral? true} ~argslist ~@body))
 
 (defn reify-ephemeral
-  [node] (if (not (ephemeral? node)) node (wrap-value (node) {:tag (node-type node)})))
+  [node]
+  (if (not (ephemeral? node)) node (wrap-value (node) {:tag (node-type node)})))
 
 (defn bag
   [& nodes] (map #(if (not (fn? %)) (wrap-value %) %) nodes))
@@ -30,12 +40,83 @@
 
 (defn terminals
   "Returns a collection of terminal nodes from a bag."
-  ([type bag] (filter #(and (some empty? (:arglists (metadata %))) (isa? (node-type %) type)) bag))
+  ([type bag] (filter #(or (not (fn? %))
+                           (and (some empty? (:arglists (metadata %)))
+                                (isa? (node-type %) type)))
+                      bag))
   ([bag] (terminals Object bag)))
 
 (defn- args-filter [args] (and (not-empty args) (not-any? #(= % '&) args)))
 
 (defn internals
   "Returns a collection of internal nodes from a bag."
-  ([type bag] (filter #(and (some args-filter (:arglists (metadata %))) (isa? (node-type %) type) bag)))
+  ([type bag] (filter #(and (some args-filter (:arglists (metadata %)))
+                            (isa? (node-type %) type))
+                      bag))
   ([bag] (internals Object bag)))
+
+(defn- construct-terminal
+  [type bag]
+  (let [terminal (reify-ephemeral (pick-from-bag (terminals type bag)))]
+    (if (fn? terminal) (list terminal) terminal)))
+
+(defn- construct-internal
+  [arg-constructor type bag]
+  (let [node (pick-from-bag (internals type bag))
+        arglist (rand-nth (filter args-filter (:arglists (metadata node))))]
+    (cons node (map #(arg-constructor (eval-node-type %)) arglist))))
+
+(defn- generate-code
+  [bag is-terminal? current-depth type]
+  (if (is-terminal? current-depth)
+    (construct-terminal type bag)
+    (construct-internal (partial generate-code bag is-terminal? (inc current-depth))
+                        type bag)))
+
+(defn- generate-parameters
+  [parameter-types]
+  (map #(with-meta (symbol (str "arg-" %2)) {:tag %1})
+       parameter-types (iterate inc 1)))
+
+(defn random-code-structure
+  "Return a code structure constructed from nodes from bag."
+  [bag is-terminal? parameter-types return-type]
+  (with-meta
+    (generate-code (concat (generate-parameters parameter-types) bag)
+                   is-terminal? 0 return-type)
+    {:params parameter-types}))
+
+;; eval is slow - so construct function via wrapping in lambdas
+;; (defn eval-code-structure
+;;   [cs] (eval (list 'fn (vec (generate-parameters (:params (meta cs))))
+;;                    (postwalk #(if (and (seq? %) (wrapped? (first %)))
+;;                                ((first %)) %) cs))))
+
+(defn- wrap-symbol
+  [cs]
+  (let [arg-seq (map #(symbol (str "arg-" %)) (iterate inc 1))]
+    (fn [& args]
+      (let [bindings (apply hash-map (interleave arg-seq args))]
+        (or (get bindings cs) cs)))))
+
+(defn- call-fn
+  [f b] (fn [& a] (apply f (map #(if (fn? %) (apply % a) %) b))))
+
+(defn code-structure-to-fn
+  "Create the function described by the given code-structure."
+  [cs]
+  (cond   
+   (symbol? cs) (wrap-symbol cs)
+   (and (seq? cs) (first cs)) (call-fn (first cs)
+                                       (map code-structure-to-fn (rest cs)))
+   :else cs))
+
+(defn pprint-code-structure
+  "Pretty print the function described by the code-structure."
+  [cs]
+  (with-pprint-dispatch #(code-dispatch (or (and (fn? %) (:name (meta %))) %))
+    (pprint (list 'fn (vec (generate-parameters (:params (meta cs))))
+                  (postwalk #(if (and (seq? %) (wrapped? (first %)))
+                               ((first %)) %) cs)))))
+
+

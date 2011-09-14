@@ -118,5 +118,3 @@
     (pprint (list 'fn (vec (generate-parameters (:params (meta cs))))
                   (postwalk #(if (and (seq? %) (wrapped? (first %)))
                                ((first %)) %) cs)))))
-
-

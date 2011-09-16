@@ -33,7 +33,7 @@
   (if (not (ephemeral? node)) node (wrap-value (node) {:tag (node-type node)})))
 
 (defn bag
-  [& nodes] (map #(if (not (fn? %)) (wrap-value %) %) nodes))
+  [& nodes] (vec (map #(if (not (fn? %)) (wrap-value %) %) nodes)))
 
 (defn pick-from-bag
   [bag] (weighted-choice weight bag))

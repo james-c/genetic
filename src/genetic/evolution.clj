@@ -9,9 +9,11 @@
 
 (defn- type-counter [type] #(if (returns? % type) 1 0))
 
+(defn- is-internal? [node] (and (seq? node) (not-empty (rest node))))
+
 (defn- code-struct-zipper
   [code-structure]
-  (zip/zipper #(and (seq? %) (not-empty (rest %)))
+  (zip/zipper is-internal?
               (fn [node] (if (fn? (first node)) (rest node) node))
               (fn [node children]
                 (with-meta
@@ -30,6 +32,12 @@
          coll nil]
     (if (zip/end? loc) coll
         (recur (zip/next loc) (cons (coll-fn (get-node loc)) coll)))))
+
+(defn- depth
+  [cs] (letfn [(dep [d cs]
+                 (if (not (is-internal? cs))
+                   d (reduce max (map #(dep (inc d) %) (rest cs)))))]
+         (dep 1 cs)))
 
 (defn- types [cs] (seq (set (collect-from-nodes node-type cs))))
 
@@ -71,15 +79,18 @@
 (defn cross-over
   "Return a structure that is the result of replacing a node in m
    with a node from f of the same type."
-  [m f]
-  (let [m-node-type (rand-nth (types m))
-        m-node (get-nth-node (type-counter m-node-type)
-                             (rand-int (node-count m-node-type m))
-                             m)
-        f-node-count (node-count m-node-type f)]
-    (if (= f-node-count 0) f
-        (replace-nth-node (type-counter type)
-                          #(with-meta m-node (metadata %))
-                          (rand-int f-node-count)
-                          f))))
+  ([max-depth m f]
+     (let [m-node-type (rand-nth (types m))
+           m-node (get-nth-node (type-counter m-node-type)
+                                (rand-int (node-count m-node-type m))
+                                m)
+           f-node-count (node-count m-node-type f)]
+       (if (= f-node-count 0) f
+           (let [child (replace-nth-node (type-counter type)
+                                         #(with-meta m-node (metadata %))
+                                         (rand-int f-node-count)
+                                         f)]
+             (if (and max-depth (> (depth child) max-depth))
+               (rand-nth [m f]) child)))))
+  ([m f] (cross-over nil m f)))
 

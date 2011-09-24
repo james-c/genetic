@@ -38,25 +38,63 @@
                          (Math/ceil (/ number 2)))))
               (divvy-up number (dec max-depth)) (iterate inc 2))))
 
+(defn select-by-tournament
+  [n tournament-size selector seq]
+  (take n (sort-by selector (take tournament-size (shuffle seq)))))
+
+
 (defn standard-evolution
   [population]
-  (let [tournament-group (vec (take (Math/round (* 0.2 (count population)))
+  (let [tournament-size (Math/round (* 0.01 (count population)))
+        best-group (map first (take (Math/round (* 0.005 (count population)))
                                     population))
-        best-group (map first (take (Math/round (* 0.01 (count population)))
-                                     population))
         rest-size (- (count population) (count best-group))]
     (concat best-group
             (repeatedly rest-size
-                        #(cross-over (first (rand-nth tournament-group))
-                                     (first (rand-nth tournament-group)))))))
+                        #(apply cross-over 10
+                                (map first
+                                     (select-by-tournament
+                                      2 tournament-size
+                                      second population)))))))
 
-(defn evolve-generation
-  ([fitness-fn evolution-fn population]
-     (let [fitnesses (sort-by #(% 1)
-                              (pmap (fn [i]
-                                      [i (fitness-fn (code-structure-to-fn i))])
-                                    population))]
-       (evolution-fn fitnesses)))
-  ([fitness-fn population]
-     (evolve-generation fitness-fn standard-evolution population)))
+(defn assess-fitness
+  [fitness-fn population]
+  (sort-by second
+           (pmap (fn [i] [i (fitness-fn (code-structure-to-fn i))])
+                 population)))
+
+(defrecord GenerationInfo [size top-individual top-fitness average-fitness])
+
+;; what if there are equally good best individuals?
+(defn census
+  [population]
+  (let [size (count population)]
+    (GenerationInfo. size
+                     (ffirst population)
+                     (second (first population))
+                     (/ (reduce + (map second population)) size))))
+
+(defn record-census-info
+  [n time info] (println "generation" n
+                         "best" (:top-fitness info)
+                         "time" time))
+
+(defn evolve
+  ([fitness-fn evolution-fn generations initial-population]
+     (loop [population (assess-fitness fitness-fn initial-population)
+            censuses (list (census population))
+            count 1
+            time (System/currentTimeMillis)]
+       (let [new-population (assess-fitness fitness-fn
+                                            (evolution-fn population))]         
+         (record-census-info count
+                             (- (System/currentTimeMillis) time)
+                             (first censuses))
+         (if (= count generations) censuses
+             (recur new-population
+                    (cons (census new-population) censuses)
+                    (inc count)
+                    (System/currentTimeMillis))))))
+  ([fitness-fn generations initial-population]
+     (evolve fitness-fn standard-evolution generations initial-population)))
 

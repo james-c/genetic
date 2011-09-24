@@ -2,8 +2,7 @@
        :doc "Code structure evolution library."}
   genetic.evolution
   (:require [clojure.zip :as zip])
-  (:use [genetic.code :only (node-type)]
-        [genetic.utils :only (metadata)]))
+  (:use [genetic.code :only (node-type)]))
 
 (defn- returns? [node type] (isa? (node-type node) type))
 
@@ -18,7 +17,7 @@
               (fn [node children]
                 (with-meta
                   (if (fn? (first node)) (cons (first node) children) children)
-                  (metadata node)))
+                  (meta node)))
               code-structure))
 
 (defn- get-node
@@ -64,14 +63,14 @@
   ([count? n cs] (do-to-nth-node count? zip/node n cs))
   ([n cs] (do-to-nth-node zip/node n cs)))
 
-(defn mutator [node] (or (:mutator (metadata node)) identity))
+(defn mutator [node] (or (:mutator (meta node)) identity))
 
 (defn mutate
   "Return a structure produced from code-structure with a random
    node changed through the application of mutator to that node.
    Uses mutator function if non given."
   ([mutator code-structure]
-      (replace-nth-node (fn [loc] (with-meta (mutator loc) (metadata loc)))
+      (replace-nth-node (fn [loc] (with-meta (mutator loc) (meta loc)))
                         (rand-int (node-count code-structure))
                         code-structure))
   ([code-structure] (mutate #((mutator %) %) code-structure)))
@@ -87,7 +86,7 @@
            f-node-count (node-count m-node-type f)]
        (if (= f-node-count 0) f
            (let [child (replace-nth-node (type-counter type)
-                                         #(with-meta m-node (metadata %))
+                                         #(with-meta m-node (meta %))
                                          (rand-int f-node-count)
                                          f)]
              (if (and max-depth (> (depth child) max-depth))

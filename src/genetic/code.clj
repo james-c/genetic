@@ -4,25 +4,25 @@
     (:use [clojure.contrib.def :only (defn-memo)]
           [clojure.walk :only (postwalk)]
           [clojure.pprint :only (pprint with-pprint-dispatch code-dispatch)]
-          [genetic.utils :only (weighted-choice metadata)]))
+          [genetic.utils :only (weighted-choice)]))
 
 (defn-memo wrap-value
   ([value meta] (with-meta (fn [] value) (assoc meta :arglists (list [])
                                                      :wrapped true)))
   ([value] (wrap-value value {})))
 
-(defn wrapped? [node] (:wrapped (metadata node)))
+(defn wrapped? [node] (:wrapped (meta node)))
 
 (defn node-type
-  [node] (or (:tag (metadata node)) Object))
+  [node] (or (:tag (meta node)) Object))
 
 (defn-memo eval-node-type
   [node]
   (eval (node-type node)))
 
-(defn weight [node] (or (:weight (metadata node)) 1))
+(defn weight [node] (or (:weight (meta node)) 1))
 
-(defn ephemeral? [node] (:ephemeral? (metadata node)))
+(defn ephemeral? [node] (:ephemeral? (meta node)))
 
 (defmacro def-ephemeral
   [name argslist & body]
@@ -32,8 +32,12 @@
   [node]
   (if (not (ephemeral? node)) node (wrap-value (node) {:tag (node-type node)})))
 
-(defn bag
-  [& nodes] (vec (map #(if (not (fn? %)) (wrap-value %) %) nodes)))
+(defmacro try-resolve
+  [v] `(cond (symbol? '~v) (with-meta ~v (meta (resolve '~v)))
+             (not (fn? ~v)) (wrap-value ~v)
+             :else ~v))
+
+(defmacro bag [& nodes] `(vec (list ~@(map #(list `try-resolve %) nodes))))
 
 (defn pick-from-bag
   [bag] (weighted-choice weight bag))
@@ -41,7 +45,7 @@
 (defn terminals
   "Returns a collection of terminal nodes from a bag."
   ([type bag] (filter #(or (not (fn? %))
-                           (and (some empty? (:arglists (metadata %)))
+                           (and (some empty? (:arglists (meta %)))
                                 (isa? (node-type %) type)))
                       bag))
   ([bag] (terminals Object bag)))
@@ -50,7 +54,7 @@
 
 (defn internals
   "Returns a collection of internal nodes from a bag."
-  ([type bag] (filter #(and (some args-filter (:arglists (metadata %)))
+  ([type bag] (filter #(and (some args-filter (:arglists (meta %)))
                             (isa? (node-type %) type))
                       bag))
   ([bag] (internals Object bag)))
@@ -63,7 +67,7 @@
 (defn- construct-internal
   [arg-constructor type bag]
   (let [node (pick-from-bag (internals type bag))
-        arglist (rand-nth (filter args-filter (:arglists (metadata node))))]
+        arglist (rand-nth (filter args-filter (:arglists (meta node))))]
     (cons node (map #(arg-constructor (eval-node-type %)) arglist))))
 
 (defn- generate-code

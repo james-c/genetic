@@ -42,16 +42,15 @@
   [n tournament-size selector seq]
   (take n (sort-by selector (take tournament-size (shuffle seq)))))
 
-
 (defn standard-evolution
   [population]
-  (let [tournament-size (Math/round (* 0.01 (count population)))
+  (let [tournament-size (Math/round (* 0.05 (count population)))
         best-group (map first (take (Math/round (* 0.005 (count population)))
                                     population))
         rest-size (- (count population) (count best-group))]
     (concat best-group
             (repeatedly rest-size
-                        #(apply cross-over 10
+                        #(apply cross-over 15
                                 (map first
                                      (select-by-tournament
                                       2 tournament-size
@@ -66,22 +65,23 @@
                                 Double/POSITIVE_INFINITY))])
                  population)))
 
-(defrecord GenerationInfo [size top-individual top-fitness average-fitness])
+(defrecord CensusInfo [size top-individual top-fitness average-fitness])
 
 ;; what if there are equally good best individuals?
 (defn census
   [population]
   (let [size (count population)]
-    (GenerationInfo. size
-                     (ffirst population)
-                     (second (first population))
-                     (/ (reduce + (map second population)) size))))
+    (CensusInfo. size
+                 (ffirst population)
+                 (second (first population))
+                 (/ (reduce + (map second population)) size))))
 
 (defn record-census-info
   [n time info] (println "generation" n
                          "best" (:top-fitness info)
                          "time" time))
 
+;; todo - time limited run
 (defn evolve
   ([fitness-fn evolution-fn generations initial-population]
      (loop [population (assess-fitness fitness-fn initial-population)

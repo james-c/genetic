@@ -17,8 +17,7 @@
   [node] (or (:tag (meta node)) Object))
 
 (defn-memo eval-node-type
-  [node]
-  (eval (node-type node)))
+  [node] (eval (node-type node)))
 
 (defn weight [node] (or (:weight (meta node)) 1))
 
@@ -74,7 +73,8 @@
   [bag is-terminal? current-depth type]
   (if (is-terminal? current-depth)
     (construct-terminal type bag)
-    (construct-internal (partial generate-code bag is-terminal? (inc current-depth))
+    (construct-internal (partial generate-code bag is-terminal?
+                                 (inc current-depth))
                         type bag)))
 
 (defn- generate-parameters
@@ -84,11 +84,14 @@
 
 (defn random-code-structure
   "Return a code structure constructed from nodes from bag."
-  [bag is-terminal? parameter-types return-type]
-  (with-meta
-    (generate-code (concat (generate-parameters parameter-types) bag)
-                   is-terminal? 0 return-type)
-    {:params parameter-types}))
+  ([bag is-terminal? parameter-types return-type]
+      (with-meta
+        (generate-code (concat (generate-parameters parameter-types) bag)
+                       is-terminal? 0 return-type)
+        {:params parameter-types}))
+  ([bag is-terminal parameter-number]
+      (random-code-structure bag is-terminal
+                             (repeat parameter-number Object) Object)))
 
 ;; eval is slow - so construct function via wrapping in lambdas
 ;; (defn eval-code-structure

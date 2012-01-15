@@ -19,6 +19,8 @@
   [individual]
   (reduce + (map #(Math/abs (- (individual %)  (area %))) (range 10))))
 
+(def ^:dynamic *last-run* (atom nil))
+
 (defn run-test
   [generations size] (evolve test-fitness-fn generations
                              (generate-population-ramped

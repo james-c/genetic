@@ -1,7 +1,7 @@
 (ns #^{:author "James Cunningham"
        :doc "Deriving the formula for the area of a circle."}
   examples.circle
-  (:use [genetic.code :only [bag pprint-code-structure]]
+  (:use [genetic.code :only [bag pprint-code-structure code-structure-to-fn]]
         [genetic.population :only [evolve generate-population-ramped]]
         [genetic.nodes :only [arithmatic-bag make-ephemeral-number-node]]))
 
@@ -22,5 +22,11 @@
                     (evolve test-fitness-fn generations
                             (generate-population-ramped
                              [Object] Object
-                             3 (concat (bag (make-ephemeral-number-node 0 10)) arithmatic-bag)
+                             3 (concat (bag (make-ephemeral-number-node 0 10))
+                                       arithmatic-bag)
                              size))))))))
+
+(defn pi-estimation
+  [] (let [prog (code-structure-to-fn (:top-individual (first @*last-run*)))]
+       (println "as fraction " (prog 1))
+       (println "as decimal " (prog 1.0))))

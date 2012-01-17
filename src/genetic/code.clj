@@ -7,8 +7,10 @@
           [genetic.utils :only (weighted-choice)]))
 
 (defn-memo wrap-value
-  ([value meta] (with-meta (fn [] value) (assoc meta :arglists (list [])
-                                                     :wrapped true)))
+  ([value meta] (with-meta (fn [] value)
+                  (assoc meta :arglists (list [])
+                         :wrapped true
+                         :tag (or (:tag meta) (type value)))))
   ([value] (wrap-value value {})))
 
 (defn wrapped? [node] (:wrapped (meta node)))

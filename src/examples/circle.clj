@@ -2,16 +2,8 @@
        :doc "Deriving the formula for the area of a circle."}
   examples.circle
   (:use [genetic.code :only [bag pprint-code-structure]]
-        [genetic.population :only [evolve generate-population-ramped]]))
-
-(defn #^{:tag Number :ephemeral? true :weight 10} a-number []
-  (rand-int 10))
-
-(defn plus [a b] (+ a b))
-
-(defn times [a b] (* a b))
-
-(defn safe-div [x y] (if (= y 0) 0 (/ x y)))
+        [genetic.population :only [evolve generate-population-ramped]]
+        [genetic.nodes :only [arithmatic-bag make-ephemeral-number-node]]))
 
 (defn area [x] (* Math/PI x x))
 
@@ -30,5 +22,5 @@
                     (evolve test-fitness-fn generations
                             (generate-population-ramped
                              [Object] Object
-                             3 (bag safe-div plus times a-number)
+                             3 (concat (bag (make-ephemeral-number-node 0 10)) arithmatic-bag)
                              size))))))))

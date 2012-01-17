@@ -44,8 +44,8 @@
 
 (defn standard-evolution
   [population]
-  (let [tournament-size (Math/round (* 0.05 (count population)))
-        best-group (map first (take (Math/round (* 0.005 (count population)))
+  (let [tournament-size (Math/round (* 0.1 (count population)))
+        best-group (map first (take (Math/round (* 0.001 (count population)))
                                     population))
         rest-size (- (count population) (count best-group))]
     (concat best-group

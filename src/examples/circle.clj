@@ -1,7 +1,7 @@
 (ns #^{:author "James Cunningham"
        :doc "Deriving the formula for the area of a circle."}
   examples.circle
-  (:use [genetic.code :only [bag]]
+  (:use [genetic.code :only [bag pprint-code-structure]]
         [genetic.population :only [evolve generate-population-ramped]]))
 
 (defn #^{:tag Number :ephemeral? true :weight 10} a-number []
@@ -22,8 +22,13 @@
 (def ^:dynamic *last-run* (atom nil))
 
 (defn run-test
-  [generations size] (evolve test-fitness-fn generations
-                             (generate-population-ramped
-                              [Object] Object
-                              3 (bag safe-div plus times a-number)
-                              size)))
+  [generations size]
+  (pprint-code-structure
+   (:top-individual
+    (first (swap! *last-run*
+                  (fn [_]
+                    (evolve test-fitness-fn generations
+                            (generate-population-ramped
+                             [Object] Object
+                             3 (bag safe-div plus times a-number)
+                             size))))))))

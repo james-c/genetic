@@ -1,6 +1,6 @@
 (ns #^{:author "James Cunningham"
        :doc "Deriving the formula for the area of a circle."}
-  examples.circle
+  genetic.examples.circle
   (:use [genetic.code :only [bag pprint-code-structure code-structure-to-fn]]
         [genetic.population :only [evolve generate-population-ramped]]
         [genetic.nodes :only [arithmatic-bag make-ephemeral-number-node]]))
@@ -9,7 +9,7 @@
 
 (defn test-fitness-fn
   [individual]
-  (reduce + (map #(Math/abs (- (individual %)  (area %))) (range 10))))
+  (reduce + (map #(Math/abs (- (individual %) (area %))) (range 10))))
 
 (def ^:dynamic *last-run* (atom nil))
 

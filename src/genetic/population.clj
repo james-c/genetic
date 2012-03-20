@@ -50,7 +50,7 @@
         rest-size (- (count population) (count best-group))]
     (concat best-group
             (repeatedly rest-size
-                        #(apply cross-over 15
+                        #(apply cross-over 20
                                 (map first
                                      (select-by-tournament
                                       2 tournament-size
@@ -79,6 +79,7 @@
 (defn record-census-info
   [n time info] (println "generation" n
                          "best" (:top-fitness info)
+                         "avg" (:average-fitness info)
                          "time" time))
 
 ;; todo - time limited run

@@ -3,17 +3,29 @@
   genetic.nodes
   (:use [genetic.code :only (bag)]))
 
+(defmacro def-tagged
+  "Returns a function taking parameters tagged with types
+   in ins, itself tagged with out, of name name, the body
+   of which calls f with the given parameters."
+  [name out ins f]
+  (let [args (map #(with-meta (gensym) {:tag %}) ins)]
+    `(defn ~(with-meta name {:tag out
+                             :arglists `'~(list (vec args))
+                             :name (str name)})
+       ~(vec args) (~f ~@args))))
+
+
 ;; arithmetic
-(defn #^{:tag Number} plus [#^Number x #^Number y] (+ x y))
-
-(defn #^{:tag Number} minus [#^Number x #^Number y] (- x y))
-
-(defn #^{:tag Number} times [#^Number x #^Number y] (* x y))
-
-(defn #^{:tag Number} div [#^Number x #^Number y] (if (= y 0) 0 (/ x y)))
-
+(def-tagged plus Number [Number Number] +)
+(def-tagged times Number [Number Number] *)
+(def-tagged minus Number [Number Number] -)
+(def-tagged div Number [Number Number] #(if (= %2 0) 0 (/ %1 %2)))
 (def arithmatic-bag (bag plus minus times div))
 
+;; ephemeral random number
+;; (the number chosen for a node is random, but stays the same)
 (defmacro make-ephemeral-number-node [min max]
   `(with-meta (fn [] (+ ~min (rand-int ~(- max min))))
      {:tag Number :ephemeral? true :weight ~(- max min) :arglists (list [])}))
+
+;; boolean

@@ -9,9 +9,14 @@
 
 (defn test-fitness-fn
   [individual]
-  (reduce + (map #(Math/abs (- (individual %) (area %))) (range 10))))
+  (reduce + (map #(Math/abs (- (individual %) (area %))) (range 5))))
 
 (def ^:dynamic *last-run* (atom nil))
+
+(defn pi-estimation
+  [] (let [prog (code-structure-to-fn (:top-individual (first @*last-run*)))]
+       (println "as fraction " (prog 1))
+       (println "as decimal " (prog 1.0))))
 
 (defn run-test
   [generations size]
@@ -24,9 +29,5 @@
                              [Object] Object
                              3 (concat (bag (make-ephemeral-number-node 0 10))
                                        arithmatic-bag)
-                             size))))))))
-
-(defn pi-estimation
-  [] (let [prog (code-structure-to-fn (:top-individual (first @*last-run*)))]
-       (println "as fraction " (prog 1))
-       (println "as decimal " (prog 1.0))))
+                             size)))))))
+  (pi-estimation))

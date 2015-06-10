@@ -1,12 +1,12 @@
 (ns #^{:author "James Cunningham"
        :doc "Functions for producing random typed code structures."}
     genetic.code
-    (:use [clojure.contrib.def :only (defn-memo)]
+    (:use [clojure.core.memoize :only (memo)]
           [clojure.walk :only (postwalk)]
           [clojure.pprint :only (pprint with-pprint-dispatch code-dispatch)]
-          [genetic.utils :only (weighted-choice)]))
+          [genetic.utils :only (weighted-choice def-memo)]))
 
-(defn-memo wrap-value
+(def-memo wrap-value
   ([value meta] (with-meta (fn [] value)
                   (assoc meta :arglists (list [])
                          :wrapped true
@@ -18,7 +18,7 @@
 (defn node-type
   [node] (or (:tag (meta node)) Object))
 
-(defn-memo eval-node-type
+(def-memo eval-node-type
   [node] (eval (node-type node)))
 
 (defn weight [node] (or (:weight (meta node)) 1))

@@ -1,6 +1,11 @@
 (ns #^{:author "James Cunningham"
        :doc "Genetic programming utility functions."}
-    genetic.utils)
+  genetic.utils
+  (:use [clojure.core.memoize :only (memo)]))
+
+(defmacro def-memo
+  [name arg-list & body]
+  `(def ~name (memo (fn ~arg-list ~@body))))
 
 (defn weighted-choice
   "Return a random element of a collection with the probability

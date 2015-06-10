@@ -20,7 +20,7 @@
 (def-tagged times Number [Number Number] *)
 (def-tagged minus Number [Number Number] -)
 (def-tagged div Number [Number Number] #(if (= %2 0) 0 (/ %1 %2)))
-(def arithmatic-bag (bag plus minus times div))
+(def arithmetic-bag (bag plus minus times div))
 
 ;; ephemeral random number
 ;; (the number chosen for a node is random, but stays the same)

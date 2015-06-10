@@ -3,7 +3,7 @@
   genetic.examples.circle
   (:use [genetic.code :only [bag pprint-code-structure code-structure-to-fn]]
         [genetic.population :only [evolve generate-population-ramped]]
-        [genetic.nodes :only [arithmatic-bag make-ephemeral-number-node]]))
+        [genetic.nodes :only [arithmetic-bag make-ephemeral-number-node]]))
 
 (defn area [x] (* Math/PI x x))
 
@@ -28,6 +28,6 @@
                             (generate-population-ramped
                              [Object] Object
                              3 (concat (bag (make-ephemeral-number-node 0 10))
-                                       arithmatic-bag)
+                                       arithmetic-bag)
                              size)))))))
   (pi-estimation))

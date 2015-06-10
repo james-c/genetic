@@ -1,4 +1,4 @@
-(defproject genetic "0.1"
+(defproject genetic "0.2-SNAPSHOT"
   :description "A genetic programming framework"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

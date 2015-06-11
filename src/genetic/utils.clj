@@ -10,9 +10,12 @@
 (defn weighted-choice
   "Return a random element of a collection with the probability
    of the element being returned being weighted by the application
-   of weight-fn to that element."
-  [weight-fn coll]
-  (let [weights (reductions + (map weight-fn coll))
-        choice (rand (last weights))]
-    (ffirst (drop-while #(< (second %) choice)
-                        (map #(list %1 %2) coll weights)))))
+  of weight-fn to that element."
+  ([weight-fn choices]
+     (letfn [(f [[total choice] next]
+               (let [weight (weight-fn next)
+                     total (+ total weight)]
+                 [total (if (< (rand) (/ weight total)) next choice)]))]
+       (second (reduce f [0 nil] choices))))
+  ([choices] (weighted-choice (fn [_] 1) choices)))
+

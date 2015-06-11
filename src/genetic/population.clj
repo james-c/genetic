@@ -2,13 +2,13 @@
        :doc "Library for managing populations of individuals."}
   genetic.population
   (:use [genetic.code :only (random-code-structure code-structure-to-fn)]
-        [genetic.evolution :only (cross-over)]))
+        [genetic.evolution :only (cross-over maximum-depth variable-depth)]))
 
 (defn generate-population-full
   "Generates a population using the full method - all individuals."
   [parameter-types return-type depth bag number]
   (repeatedly number
-              (fn [] (random-code-structure bag #(= % depth)
+              (fn [] (random-code-structure bag (maximum-depth depth)
                                             parameter-types return-type))))
 
 (defn generate-population-grow
@@ -16,7 +16,7 @@
   [parameter-types return-type max-depth bag number]
   (repeatedly number
               (fn [] (random-code-structure
-                      bag #(and (>= % 2) (or (>= % max-depth) (<= (rand) 0.5)))
+                      bag (variable-depth max-depth 0.5)
                       parameter-types return-type))))
 
 (defn- divvy-up

@@ -93,3 +93,17 @@
                (rand-nth [m f]) child)))))
   ([m f] (cross-over nil m f)))
 
+;; utils
+
+(defn maximum-depth
+  "Convenience function for returing a simple max depth function"
+  [max] (fn [depth] (= depth max)))
+
+(defn variable-depth
+  "Returns a function for use in mixed depth tree generation
+   max - maximum depth
+   p-terminal probability of outputing a terminal node"
+  [max p-terminal]
+  (fn [depth] (and (>= depth 2) (or (>= depth max)
+                                    (<= (rand) p-terminal)))))
+

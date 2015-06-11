@@ -128,6 +128,3 @@
                   (postwalk #(if (and (seq? %) (wrapped? (first %)))
                                ((first %)) %) cs)))))
 
-;; utils
-
-(defn maximum-depth [n] (fn [depth] (= depth n)))

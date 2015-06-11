@@ -50,7 +50,7 @@
         rest-size (- (count population) (count best-group))]
     (concat best-group
             (repeatedly rest-size
-                        #(apply cross-over 20
+                        #(apply cross-over 10
                                 (map first
                                      (select-by-tournament
                                       2 tournament-size

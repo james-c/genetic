@@ -58,12 +58,11 @@
 
 (defn assess-fitness
   [fitness-fn population]
-  (sort-by second
-           (pmap (fn [i] [i (try
-                              (fitness-fn (code-structure-to-fn i))
-                              (catch ArithmeticException e
-                                Double/POSITIVE_INFINITY))])
-                 population)))
+  (pmap (fn [i] [i (try
+                     (fitness-fn (code-structure-to-fn i))
+                     (catch ArithmeticException e
+                       Double/POSITIVE_INFINITY))])
+        population))
 
 (defrecord CensusInfo [size top-individual top-fitness average-fitness])
 

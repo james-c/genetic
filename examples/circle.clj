@@ -3,7 +3,8 @@
   genetic.examples.circle
   (:use [genetic.code :only [bag pprint-code-structure code-structure-to-fn]]
         [genetic.population :only [evolve generate-population-ramped]]
-        [genetic.nodes :only [arithmetic-bag make-ephemeral-number-node]]))
+        [genetic.nodes :only [arithmetic-bag make-ephemeral-number-node]]
+        [genetic.utils :only [best]]))
 
 (defn area [x] (* Math/PI x x))
 
@@ -14,7 +15,8 @@
 (def ^:dynamic *last-run* (atom nil))
 
 (defn pi-estimation
-  [] (let [prog (code-structure-to-fn (:top-individual (first @*last-run*)))]
+  [] (let [prog (code-structure-to-fn ;; (:top-individual (first @*last-run*))
+                 (:top-individual (best #(/ 1 (:top-fitness %)) @*last-run*)))]
        (println "as fraction " (prog 1))
        (println "as decimal " (prog 1.0))))
 

@@ -19,3 +19,20 @@
        (second (reduce f [0 nil] choices))))
   ([choices] (weighted-choice (fn [_] 1) choices)))
 
+(defn best
+  ([f seq]
+   (second (reduce (fn [[v i] next] (let [val (f next)]
+                                      (if (> val v)
+                                        [val next]
+                                         [v i])))
+                   [Double/NEGATIVE_INFINITY nil] seq)))
+  ([n f seq]
+   (letfn [(b [vals next]
+             (let [val (f next)]
+               (if (< (count vals) n)
+                 (sort (conj vals [val next]))
+                 (if (> val (ffirst vals))
+                   (sort (conj (rest vals) [val next]))
+                   vals))))]
+     (map second (reduce b [] seq)))))
+

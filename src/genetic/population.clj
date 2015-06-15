@@ -2,7 +2,9 @@
        :doc "Library for managing populations of individuals."}
   genetic.population
   (:use [genetic.code :only (random-code-structure code-structure-to-fn)]
-        [genetic.evolution :only (cross-over maximum-depth variable-depth)]))
+        [genetic.evolution :only (cross-over maximum-depth variable-depth)]
+        [genetic.utils :only (best)])
+  (:require (bigml.sampling [simple :as simple])))
 
 (defn generate-population-full
   "Generates a population using the full method - all individuals."
@@ -40,17 +42,19 @@
 
 (defn select-by-tournament
   [n tournament-size selector seq]
-  (take n (sort-by selector (take tournament-size (shuffle seq)))))
+  (take n (sort-by selector (take tournament-size (simple/sample seq)))))
 
 (defn standard-evolution
   [population]
   (let [tournament-size (Math/round (* 0.1 (count population)))
-        best-group (map first (take (Math/round (* 0.001 (count population)))
-                                    population))
+        best-group (map first ;; (take (Math/round (* 0.001 (count population)))
+                              ;;       population)
+                        (best (Math/round (* 0.001 (count population)))
+                              #(/ 1 (second %)) population)) ;; use best as not sorted
         rest-size (- (count population) (count best-group))]
     (concat best-group
             (repeatedly rest-size
-                        #(apply cross-over 10
+                        #(apply cross-over 15
                                 (map first
                                      (select-by-tournament
                                       2 tournament-size
@@ -69,10 +73,11 @@
 ;; what if there are equally good best individuals?
 (defn census
   [population]
-  (let [size (count population)]
+  (let [size (count population)
+        top (best #(/ 1 (second %)) population)]
     (CensusInfo. size
-                 (ffirst population)
-                 (second (first population))
+                 (first top)
+                 (second top)
                  (/ (reduce + (map second population)) size))))
 
 (defn record-census-info
@@ -88,9 +93,9 @@
             censuses (list (census population))
             count 1
             time (System/currentTimeMillis)]
-       (let [new-population (assess-fitness fitness-fn
-                                            (evolution-fn population))]         
-         (record-census-info count
+       (let [new-population (doall (assess-fitness fitness-fn
+                                                   (evolution-fn population)))]         
+          (record-census-info count
                              (- (System/currentTimeMillis) time)
                              (first censuses))
          (if (= count generations) censuses

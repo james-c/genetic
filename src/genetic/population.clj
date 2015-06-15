@@ -3,7 +3,7 @@
   genetic.population
   (:use [genetic.code :only (random-code-structure code-structure-to-fn)]
         [genetic.evolution :only (cross-over maximum-depth variable-depth)]
-        [genetic.utils :only (best)])
+        [genetic.utils :only (best divvy-up)])
   (:require (bigml.sampling [simple :as simple])))
 
 (defn generate-population-full
@@ -20,12 +20,6 @@
               (fn [] (random-code-structure
                       bag (variable-depth max-depth 0.5)
                       parameter-types return-type))))
-
-(defn- divvy-up
-  [total slots] (let [n (int (/ total slots))
-                      r (rem total slots)]
-                  (shuffle (concat (repeat (- slots r) n)
-                                   (repeat r (inc n))))))
 
 (defn generate-population-ramped
   "Generate a population using the ramped half-and-half method."
@@ -47,14 +41,12 @@
 (defn standard-evolution
   [population]
   (let [tournament-size (Math/round (* 0.1 (count population)))
-        best-group (map first ;; (take (Math/round (* 0.001 (count population)))
-                              ;;       population)
-                        (best (Math/round (* 0.001 (count population)))
-                              #(/ 1 (second %)) population)) ;; use best as not sorted
+        best-group (map first (best (Math/round (* 0.001 (count population)))
+                                    #(/ 1 (second %)) population))
         rest-size (- (count population) (count best-group))]
     (concat best-group
             (repeatedly rest-size
-                        #(apply cross-over 15
+                        #(apply cross-over 30
                                 (map first
                                      (select-by-tournament
                                       2 tournament-size

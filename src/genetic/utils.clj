@@ -37,3 +37,8 @@
                        vals))))]
          (map second (reduce b [] seq))))))
 
+(defn divvy-up
+  [total slots] (let [n (int (/ total slots))
+                      r (rem total slots)]
+                  (shuffle (concat (repeat (- slots r) n)
+                                   (repeat r (inc n))))))

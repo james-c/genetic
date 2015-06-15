@@ -27,12 +27,13 @@
                                          [v i])))
                    [Double/NEGATIVE_INFINITY nil] seq)))
   ([n f seq]
-   (letfn [(b [vals next]
-             (let [val (f next)]
-               (if (< (count vals) n)
-                 (sort (conj vals [val next]))
-                 (if (> val (ffirst vals))
-                   (sort (conj (rest vals) [val next]))
-                   vals))))]
-     (map second (reduce b [] seq)))))
+   (if (<= n 0) []
+       (letfn [(b [vals next]
+                 (let [val (f next)]
+                   (if (< (count vals) n)
+                     (sort-by first (conj vals [val next]))
+                     (if (> val (ffirst vals))
+                       (sort-by first (conj (rest vals) [val next]))
+                       vals))))]
+         (map second (reduce b [] seq))))))
 

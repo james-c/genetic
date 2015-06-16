@@ -2,7 +2,7 @@
        :doc "Library for managing populations of individuals."}
   genetic.population
   (:use [genetic.code :only (random-code-structure code-structure-to-fn)]
-        [genetic.evolution :only (cross-over maximum-depth variable-depth)]
+        [genetic.evolution :only (cross-over mutate maximum-depth variable-depth)]
         [genetic.utils :only (best divvy-up)])
   (:require (bigml.sampling [simple :as simple])))
 
@@ -38,19 +38,43 @@
   [n tournament-size selector seq]
   (take n (sort-by selector (take tournament-size (simple/sample seq)))))
 
+(defmacro percent
+  [seq p] `(Math/round (* ~p (count ~seq))))
+
 (defn standard-evolution
-  [population]
-  (let [tournament-size (Math/round (* 0.1 (count population)))
-        best-group (map first (best (Math/round (* 0.001 (count population)))
-                                    #(/ 1 (second %)) population))
-        rest-size (- (count population) (count best-group))]
-    (concat best-group
-            (repeatedly rest-size
-                        #(apply cross-over 30
-                                (map first
-                                     (select-by-tournament
-                                      2 tournament-size
-                                      second population)))))))
+  [population & {:keys [tournament-spec best-spec crossover-spec mutation-spec]
+                 :or {tournament-spec {:n 0.1}
+                      best-spec {:n 0.001}
+                      crossover-spec {:n 0.9 :max-depth 30}
+                      mutation-spec {:n 0.099 :types [:point]}}}]
+  (let [tourn-size (percent population (:n tournament-spec))
+        best-n (:n best-spec)
+        crossover-n (:n crossover-spec)
+        mutation-n (:n mutation-spec)
+        total-n (+ best-n crossover-n mutation-n)
+        best-size (percent population (/ best-n total-n))
+        crossover-size (percent population (/ crossover-n total-n))
+        mutation-size (- (count population) best-size crossover-size)]    
+    (concat (map first (best best-size #(/ 1 (second %)) population)) ;; best
+            (repeatedly crossover-size                                ;; cross-over
+                        #(apply cross-over (:max-depth crossover-spec)
+                                (map first (select-by-tournament
+                                            2 tourn-size second population))))
+            (repeatedly mutation-size
+                        #(apply mutate (map first (select-by-tournament
+                                                   1 tourn-size second population))))))
+  ;; (let [tournament-size (Math/round (* 0.1 (count population)))
+  ;;       best-group (map first (best (Math/round (* 0.001 (count population)))
+  ;;                                   #(/ 1 (second %)) population))
+  ;;       rest-size (- (count population) (count best-group))]
+  ;;   (concat best-group
+  ;;           (repeatedly rest-size
+  ;;                       #(apply cross-over 30
+  ;;                               (map first
+  ;;                                    (select-by-tournament
+  ;;                                     2 tournament-size
+  ;;                                     second population))))))
+  )
 
 (defn assess-fitness
   [fitness-fn population]

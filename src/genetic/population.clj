@@ -41,12 +41,18 @@
 (defmacro percent
   [seq p] `(Math/round (* ~p (count ~seq))))
 
-(defn standard-evolution
-  [population & {:keys [tournament-spec best-spec crossover-spec mutation-spec]
+(defmacro def-evo-fn
+  [name params & body]
+  `(defn ~name
+     [~@params & {:keys [tournament-spec best-spec crossover-spec mutation-spec]
                  :or {tournament-spec {:n 0.1}
                       best-spec {:n 0.001}
                       crossover-spec {:n 0.9 :max-depth 30}
-                      mutation-spec {:n 0.099 :types [:point]}}}]
+                      mutation-spec {:n 0.0 :types [:point]}}}]
+     ~@body))
+
+(def-evo-fn standard-evolution
+  [population]
   (let [tourn-size (percent population (:n tournament-spec))
         best-n (:n best-spec)
         crossover-n (:n crossover-spec)
@@ -62,19 +68,7 @@
                                             2 tourn-size second population))))
             (repeatedly mutation-size
                         #(apply mutate (map first (select-by-tournament
-                                                   1 tourn-size second population))))))
-  ;; (let [tournament-size (Math/round (* 0.1 (count population)))
-  ;;       best-group (map first (best (Math/round (* 0.001 (count population)))
-  ;;                                   #(/ 1 (second %)) population))
-  ;;       rest-size (- (count population) (count best-group))]
-  ;;   (concat best-group
-  ;;           (repeatedly rest-size
-  ;;                       #(apply cross-over 30
-  ;;                               (map first
-  ;;                                    (select-by-tournament
-  ;;                                     2 tournament-size
-  ;;                                     second population))))))
-  )
+                                                   1 tourn-size second population)))))))
 
 (defn assess-fitness
   [fitness-fn population]

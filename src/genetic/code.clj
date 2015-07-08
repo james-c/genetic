@@ -95,12 +95,6 @@
       (random-code-structure bag is-terminal
                              (repeat parameter-number Object) Object)))
 
-;; eval is slow - so construct function via wrapping in lambdas
-;; (defn eval-code-structure
-;;   [cs] (eval (list 'fn (vec (generate-parameters (:params (meta cs))))
-;;                    (postwalk #(if (and (seq? %) (wrapped? (first %)))
-;;                                ((first %)) %) cs))))
-
 (defn- wrap-symbol
   [cs]
   (let [arg-seq (map #(symbol (str "arg-" %)) (iterate inc 1))]
@@ -116,8 +110,7 @@
   [cs]
   (cond   
    (symbol? cs) (wrap-symbol cs)
-   (and (seq? cs) (first cs)) (call-fn (first cs)
-                                       (map code-structure-to-fn (rest cs)))
+   (and (seq? cs) (first cs)) (call-fn (first cs) (map code-structure-to-fn (rest cs)))
    :else cs))
 
 (defn pprint-code-structure

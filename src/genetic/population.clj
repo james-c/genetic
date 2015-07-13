@@ -25,13 +25,13 @@
   "Generate a population using the ramped half-and-half method."
   [parameter-types return-type max-depth bag number]
   (apply concat
-         (map (fn [number depth]
-                (concat (generate-population-full
-                         parameter-types return-type depth bag
-                         (Math/floor (/ number 2)))
-                        (generate-population-grow
-                         parameter-types return-type depth bag
-                         (Math/ceil (/ number 2)))))
+         (pmap (fn [number depth]
+                   (concat (generate-population-full
+                            parameter-types return-type depth bag
+                            (Math/floor (/ number 2)))
+                           (generate-population-grow
+                            parameter-types return-type depth bag
+                            (Math/ceil (/ number 2)))))
               (divvy-up number (dec max-depth)) (iterate inc 2))))
 
 (defn select-by-tournament
@@ -104,7 +104,7 @@
             count 1
             time (System/currentTimeMillis)]
        (let [new-population (doall (assess-fitness fitness-fn
-                                                   (evolution-fn population)))]         
+                                                   (evolution-fn population)))] 
           (record-census-info count
                              (- (System/currentTimeMillis) time)
                              (first censuses))

@@ -110,7 +110,8 @@
   [cs]
   (cond   
    (symbol? cs) (wrap-symbol cs)
-   (and (seq? cs) (first cs)) (call-fn (first cs) (map code-structure-to-fn (rest cs)))
+   (and (seq? cs) (first cs)) (call-fn (first cs)
+                                       (pmap code-structure-to-fn (rest cs)))
    :else cs))
 
 (defn pprint-code-structure

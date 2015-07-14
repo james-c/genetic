@@ -79,18 +79,18 @@
   "Return a structure that is the result of replacing a node in m
    with a node from f of the same type."
   ([max-depth m f]
-     (let [m-node-type (rand-nth (types m)) ;; should select node not type
-           m-node (get-nth-node (type-counter m-node-type)
-                                (rand-int (node-count m-node-type m))
-                                m)
-           f-node-count (node-count m-node-type f)]
-       (if (= f-node-count 0) f
-           (let [child (replace-nth-node (type-counter type)
-                                         #(with-meta m-node (meta %))
-                                         (rand-int f-node-count)
-                                         f)]
-             (if (and max-depth (> (depth child) max-depth))
-               (rand-nth [m f]) child)))))
+   (let [m-node-type (rand-nth (types m))
+         m-node (get-nth-node (type-counter m-node-type)
+                              (rand-int (node-count m-node-type m))
+                              m)
+         f-node-count (node-count m-node-type f)]
+     (if (= f-node-count 0) f
+         (let [child (replace-nth-node (type-counter type)
+                                       #(with-meta m-node (meta %))
+                                       (rand-int f-node-count)
+                                       f)]
+           (if (and max-depth (> (depth child) max-depth))
+             (rand-nth [m f]) child)))))
   ([m f] (cross-over nil m f)))
 
 ;; utils
